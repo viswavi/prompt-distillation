@@ -232,7 +232,7 @@ def get_dataset_configs(dataset_name: str) -> dict:
     return all_configs
 
 
-def process_datasets(chunk: dict, loads_configs: bool):
+def process_datasets(chunk: list, loads_configs: bool):
     """Process through the chunk of datasets and get dataset info to store."""
     dataset_index = {}
     max_attempts = 3

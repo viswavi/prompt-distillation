@@ -28,7 +28,7 @@ dependencies = [
     "gradio==3.38.0",
     "torch",
     "pytest",
-    "openai==0.27.10",
+    "openai",
     "sentencepiece",
     "bert_score",
     "sacrebleu",
@@ -45,7 +45,7 @@ dependencies = [
     "psutil",
     "protobuf",
     "nest-asyncio",
-    "litellm==0.1.583",
+    "litellm",
     "peft"
 ]
 

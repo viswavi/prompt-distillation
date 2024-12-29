@@ -177,6 +177,8 @@ def main():
         line_print("Prompt parsed.")
 
     if propmt_has_been_parsed and not dataset_has_been_retrieved:
+        retriever_logger = get_formatted_logger("DescriptionDatasetRetriever")
+        retriever_logger.setLevel(logging.INFO)
         prompt_spec = MockPromptSpec(
             TaskType.TEXT_GENERATION, status["instruction"], status["examples"]
         )
@@ -197,8 +199,6 @@ def main():
             else:
                 line_print("Invalid input. Please enter y or n.")
 
-        retriever = DescriptionDatasetRetriever()
-
         if auto_transform_data:
             while True:
                 line_print(
@@ -206,22 +206,20 @@ def main():
                 )
                 line = input()
                 try:
-                    num_points_to_transform = int(line)
+                    total_num_points_to_transform = int(line)
                 except ValueError:
                     line_print("Invalid input. Please enter a number.")
                     continue
-                if num_points_to_transform <= 0:
+                if total_num_points_to_transform <= 0:
                     line_print("Invalid input. Please enter a number greater than 0.")
                     continue
-                status["num_transform"] = num_points_to_transform
+                status["num_transform"] = total_num_points_to_transform
                 break
-            retrieved_dataset_dict = retriever.retrieve_dataset_dict(
-                prompt_spec,
-                auto_transform_data=True,
-                num_points_to_transform=num_points_to_transform,
-            )
-        else:
-            retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
+        retriever = DescriptionDatasetRetriever(
+            auto_transform_data=auto_transform_data,
+            total_num_points_to_transform=total_num_points_to_transform,
+        )
+        retrieved_dataset_dict = retriever.retrieve_dataset_dict(prompt_spec)
 
         dataset_has_been_retrieved = True
         if retrieved_dataset_dict is not None:

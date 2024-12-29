@@ -5,12 +5,12 @@ from __future__ import annotations  # noqa FI58
 import asyncio
 import json
 import logging
+import re
 import time
 
 import aiolimiter
 import litellm.utils
 import openai
-import openai.error
 import tiktoken
 from aiohttp import ClientSession
 from litellm import acompletion, completion
@@ -19,23 +19,24 @@ from tqdm.asyncio import tqdm_asyncio
 # Note that litellm converts all API errors into openai errors,
 # so openai errors are valid even when using other services.
 API_ERRORS = (
-    openai.error.APIError,
-    openai.error.Timeout,
-    openai.error.RateLimitError,
-    openai.error.ServiceUnavailableError,
-    openai.error.InvalidRequestError,
+    openai.APIError,
+    openai.APITimeoutError,
+    openai.RateLimitError,
+    openai.BadRequestError,
+    openai.APIStatusError,
     json.decoder.JSONDecodeError,
     AssertionError,
 )
 
 ERROR_ERRORS_TO_MESSAGES = {
-    openai.error.InvalidRequestError: "API Invalid Request: Prompt was filtered",
-    openai.error.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
-    openai.error.APIConnectionError: "Error Communicating with API",
-    openai.error.Timeout: "API Timeout Error: API Timeout",
-    openai.error.ServiceUnavailableError: "API service unavailable error: {e}",
-    openai.error.APIError: "API error: {e}",
+    openai.BadRequestError: "API Invalid Request: Prompt was filtered",
+    openai.RateLimitError: "API rate limit exceeded. Sleeping for 10 seconds.",
+    openai.APIConnectionError: "Error Communicating with API",
+    openai.APITimeoutError: "API Timeout Error: API Timeout",
+    openai.APIStatusError: "API service unavailable error: {e}",
+    openai.APIError: "API error: {e}",
 }
+BUFFER_DURATION = 2
 
 
 class APIAgent:
@@ -43,14 +44,14 @@ class APIAgent:
 
     def __init__(
         self,
-        model_name: str = "gpt-3.5-turbo",
-        max_tokens: int | None = None,
+        model_name: str = "gpt-4",
+        max_tokens: int | None = 4000,
         api_base: str | None = None,
     ):
         """Initialize APIAgent with model_name and max_tokens.
 
         Args:
-            model_name: Name fo the model to use (by default, gpt-3.5-turbo).
+            model_name: Name of the model to use (by default, gpt-4).
             max_tokens: The maximum number of tokens to generate. Defaults to the max
                 value for the model if available through litellm.
             api_base: Custom endpoint for Hugging Face's inference API.
@@ -102,7 +103,6 @@ class APIAgent:
             max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
         else:
             max_tokens = 3 * num_prompt_tokens
-
         response = completion(  # completion gets the key from os.getenv
             model=self.model_name,
             messages=[
@@ -142,99 +142,118 @@ class APIAgent:
         Returns:
             List of generated responses.
         """
-        openai.aiosession.set(ClientSession())
-        limiter = aiolimiter.AsyncLimiter(requests_per_minute)
+        async with ClientSession() as _:
+            limiter = aiolimiter.AsyncLimiter(requests_per_minute)
 
-        async def _throttled_completion_acreate(
-            model: str,
-            messages: list[dict[str, str]],
-            temperature: float,
-            max_tokens: int,
-            n: int,
-            top_p: float,
-            limiter: aiolimiter.AsyncLimiter,
-        ):
-            async with limiter:
-                for _ in range(3):
-                    try:
-                        return await acompletion(
-                            model=model,
-                            messages=messages,
-                            api_base=self.api_base,
-                            temperature=temperature,
-                            max_tokens=max_tokens,
-                            n=n,
-                            top_p=top_p,
-                        )
-                    except tuple(ERROR_ERRORS_TO_MESSAGES.keys()) as e:
-                        if isinstance(
-                            e,
-                            (
-                                openai.error.ServiceUnavailableError,
-                                openai.error.APIError,
-                            ),
-                        ):
-                            logging.warning(
-                                ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
+            async def _throttled_completion_acreate(
+                model: str,
+                messages: list[dict[str, str]],
+                temperature: float,
+                max_tokens: int,
+                n: int,
+                top_p: float,
+                limiter: aiolimiter.AsyncLimiter,
+            ):
+                async with limiter:
+                    for _ in range(3):
+                        try:
+                            return await acompletion(
+                                model=model,
+                                messages=messages,
+                                api_base=self.api_base,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                n=n,
+                                top_p=top_p,
                             )
-                        elif isinstance(e, openai.error.InvalidRequestError):
-                            logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
-                            return {
-                                "choices": [
-                                    {
-                                        "message": {
-                                            "content": "Invalid Request: Prompt was filtered"  # noqa E501
+                        except tuple(ERROR_ERRORS_TO_MESSAGES.keys()) as e:
+                            if isinstance(
+                                e,
+                                (
+                                    openai.APIStatusError,
+                                    openai.APIError,
+                                ),
+                            ):
+                                logging.warning(
+                                    ERROR_ERRORS_TO_MESSAGES[type(e)].format(e=e)
+                                )
+                            elif isinstance(e, openai.BadRequestError):
+                                logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
+                                return {
+                                    "choices": [
+                                        {
+                                            "message": {
+                                                "content": "Invalid Request: Prompt was filtered"  # noqa E501
+                                            }
                                         }
-                                    }
-                                ]
-                            }
-                        else:
-                            logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
-                        await asyncio.sleep(10)
-                return {"choices": [{"message": {"content": ""}}]}
+                                    ]
+                                }
+                            else:
+                                logging.warning(ERROR_ERRORS_TO_MESSAGES[type(e)])
+                            await asyncio.sleep(10)
+                    return {"choices": [{"message": {"content": ""}}]}
 
-        num_prompt_tokens = max(count_tokens_from_string(prompt) for prompt in prompts)
-        if self.max_tokens:
-            max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
-        else:
-            max_tokens = 3 * num_prompt_tokens
-
-        async_responses = [
-            _throttled_completion_acreate(
-                model=self.model_name,
-                messages=[
-                    {"role": "user", "content": f"{prompt}"},
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                n=responses_per_request,
-                top_p=1,
-                limiter=limiter,
+            num_prompt_tokens = max(
+                count_tokens_from_string(prompt) for prompt in prompts
             )
-            for prompt in prompts
-        ]
-        responses = await tqdm_asyncio.gather(*async_responses)
+            if self.max_tokens:
+                max_tokens = self.max_tokens - num_prompt_tokens - token_buffer
+            else:
+                max_tokens = 3 * num_prompt_tokens
+
+            async_responses = [
+                _throttled_completion_acreate(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "user", "content": f"{prompt}"},
+                    ],
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    n=responses_per_request,
+                    top_p=1,
+                    limiter=limiter,
+                )
+                for prompt in prompts
+            ]
+            responses = await tqdm_asyncio.gather(*async_responses)
         # Note: will never be none because it's set, but mypy doesn't know that.
-        await openai.aiosession.get().close()
         return responses
 
 
-def handle_api_error(e) -> None:
+def handle_api_error(e, backoff_duration=1) -> None:
     """Handle OpenAI errors or related errors that the API may raise.
+
+    Sleeps incase error is some type of timeout, else throws error.
 
     Args:
         e: The error to handle. This could be an OpenAI error or a related
            non-fatal error, such as JSONDecodeError or AssertionError.
+        backoff_duration: The duration (in s) to wait before retrying.
+
+    Raises:
+        e: If the error is not an instance of APIError, Timeout, or RateLimitError.
+
+    Returns:
+        None
     """
     logging.error(e)
+
     if not isinstance(e, API_ERRORS):
         raise e
+
     if isinstance(
         e,
-        (openai.error.APIError, openai.error.Timeout, openai.error.RateLimitError),
+        (openai.APIError, openai.APITimeoutError, openai.RateLimitError),
     ):
-        # For these errors, OpenAI recommends waiting before retrying.
-        time.sleep(1)
+
+        match = re.search(r"Please retry after (\d+) seconds", str(e))
+        # If OpenAI mentions how long to sleep, use that. Otherwise, do
+        # exponential backoff.
+        if match is not None:
+            backoff_duration = int(match.group(1)) + BUFFER_DURATION
+
+        logging.info(f"Retrying in {backoff_duration} seconds...")
+        time.sleep(backoff_duration)
 
 
 def count_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:

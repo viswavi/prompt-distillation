@@ -14,10 +14,14 @@ def get_formatted_logger(logger_name: str):
         A logger object.
     """
     logger = logging.getLogger(logger_name)
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    # Check if the logger already has a StreamHandler to prevent adding another one.
+    if not any(
+        isinstance(handler, logging.StreamHandler) for handler in logger.handlers
+    ):
+        ch = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
     return logger

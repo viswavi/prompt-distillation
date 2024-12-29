@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # noqa FI58
 
+import json
 import os
 import pickle
 import tempfile
@@ -17,51 +18,49 @@ from test_helpers import MockCompletion, create_test_search_index
 
 # The following variables are specifically for the
 # four automatic column selection and reranking tests.
+dataset_info_file = "test_helpers/reranking_dataset_index_tiny.json"
+with open(dataset_info_file, "r") as f:
+    dataset_info = json.load(f)
 
-SQUAD_DATASET_INFO = {
-    "config_name": "plain_text",
-    "sample_row": {
-        "id": "5733be284776f41900661182",
-        "title": "University_of_Notre_Dame",
-        "context": "Architecturally, the school has a Catholic character. Atop the Main Building's gold dome is a golden statue of the Virgin Mary.",  # noqa: E501
-        "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",  # noqa: E501
-        "answers.text": ["Saint Bernadette Soubirous"],
-        "answers.answer_start": [515],
-    },
-    "columns": "id, title, context, question, answers_text, answers_answer_start",
-    "columns_mapping": {
-        "id": "id",
-        "title": "title",
-        "context": "context",
-        "question": "question",
-        "answers.text": "answers_text",
-        "answers.answer_start": "answers_answer_start",
-    },
-    "dataset_description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.\n",  # noqa: E501
-    "dataset_name": "squad",
-}
+SQUAD_DATASET_INFO = dataset_info["squad"]["configs"]["plain_text"]
 
 
 INSTRUCTION = "Your task is to generate a relevant answer to a given question. You will be provided with context for each question"  # noqa: E501
 GPT3_RESPONSE_COL_SELECTION_CORRECT = MockCompletion(
-    """{\n        \"input\": [\"context\", \"question\"],\n        \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
+    """{\n        \"input\": [\"context\", \"question\"],\n        \"output\": [\"answers_text\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
 GPT3_RESPONSE_COL_SELECTION_WITHOUT_REQUIRED_COLS = MockCompletion(
     """{\n       \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
 GPT3_RESPONSE_COL_SELECTION_WITH_UNKNOWN_COLS = MockCompletion(
-    """{\n   \"input\": [\"comprehension\", \"question\"],\n     \"output\": [\"answers\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
+    """{\n   \"input\": [\"comprehension\", \"question\"],\n     \"output\": [\"answers_text\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
 GPT3_RESPONSE_COL_SELECTION_WITH_MORE_THAN_ONE_OUTPUT = MockCompletion(
     """{\n   \"input\": [\"context\", \"question\"],\n     \"output\": [\"answers\", \"title\"],\n        \"irrelevant\": [\"id\", \"title\"],\n        \"ambiguous\": []\n}"""  # noqa: E501
 )
 
-GPT3_RESPONSE_RERANK_DATASETS_CORRECT = MockCompletion("""[squad,plain_text,high]""")
-GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG = MockCompletion(
-    """[squad,not_a_config,high]"""
+GPT3_RESPONSE_RERANK_DATASETS_CORRECT_DATASET = MockCompletion(
+    """**codeparrot/apps**"""
 )
+GPT3_RESPONSE_RERANK_DATASETS_CORRECT_CONFIG = MockCompletion("""**interview**""")
+GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG = MockCompletion("""not_a_config""")
 
 TINY_DUAL_ENCODER_NAME = "google/bert_uncased_L-2_H-128_A-2"
+
+
+def test_canonicalize_dataset_using_samples():
+    """Test canonicalize_dataset_using_samples."""
+    inputs = ["input1", "input2"]
+    outputs = ["output1", "output2"]
+    dataset_dict = DescriptionDatasetRetriever().make_dataset_from_samples(
+        inputs, outputs
+    )
+    assert dataset_dict["train"].column_names == ["input_col", "output_col"]
+    assert dataset_dict["train"].shape == (2, 2)
+    assert dataset_dict["train"][0]["input_col"] == "input1"
+    assert dataset_dict["train"][0]["output_col"] == "output1"
+    assert dataset_dict["train"][1]["input_col"] == "input2"
+    assert dataset_dict["train"][1]["output_col"] == "output2"
 
 
 def test_initialize_dataset_retriever():
@@ -104,7 +103,7 @@ def test_encode_model_retriever():
 def test_automatic_column_selection_correct(mocked_parsing_method):
     """Check that normal automatic column selection runs fine."""
     expected_input_columns = ["context", "question"]
-    expected_output_column = "answers"
+    expected_output_column = "answers_text"
     (
         input_columns,
         output_column,
@@ -232,52 +231,68 @@ def mock_choose_dataset(self, top_datasets: list[DatasetInfo]) -> str | None:
 
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_RERANK_DATASETS_CORRECT],
+    side_effect=[
+        GPT3_RESPONSE_RERANK_DATASETS_CORRECT_DATASET,
+        GPT3_RESPONSE_RERANK_DATASETS_CORRECT_DATASET,
+        GPT3_RESPONSE_RERANK_DATASETS_CORRECT_CONFIG,
+        GPT3_RESPONSE_RERANK_DATASETS_CORRECT_CONFIG,
+    ],
 )
 def test_rerank_datasets_correct(mocked_parsing_method):
     """Test correct working of dataset reranking."""
     prompt_spec = MockPromptSpec(
         task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
     )
-    datasets_list = ["squad", "wiki_qa"]
-    dataset_info = DescriptionDatasetRetriever(
-        reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json"
-    ).rerank_datasets(datasets_list, prompt_spec)
-    assert dataset_info is not None
-    assert dataset_info["dataset_name"] == "squad"
-    assert dataset_info["config_name"] == "plain_text"
-    other_required_keys = ["dataset_description", "columns", "sample_row"]
+    datasets_list = ["squad", "codeparrot/apps"]
 
-    assert all(
-        [key in dataset_info for key in other_required_keys]
-    ), "Not all required keys are present in the dictionary"
+    descriptionDatasetRetriever = DescriptionDatasetRetriever(
+        reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",
+        num_votes=2,
+    )
+    dataset_info_dict = descriptionDatasetRetriever.get_all_dataset_infos(datasets_list)
+    dataset_name, config_name = descriptionDatasetRetriever.rerank_datasets(
+        dataset_info_dict, prompt_spec
+    )
+    assert dataset_name == "codeparrot/apps"
+    assert config_name == "interview"
 
 
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=[GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG],
+    side_effect=[
+        GPT3_RESPONSE_RERANK_DATASETS_CORRECT_DATASET,
+        GPT3_RESPONSE_RERANK_DATASETS_CORRECT_DATASET,
+        GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG,
+        GPT3_RESPONSE_RERANK_DATASETS_HALLUCINATES_CONFIG,
+    ],
 )
 def test_rerank_datasets_hallucinate_config(mocked_parsing_method):
     """Check if dataset reranking returns None if LLM hallucinates config name."""
     prompt_spec = MockPromptSpec(
         task_type=TaskType.TEXT_GENERATION, instruction=INSTRUCTION
     )
-    datasets_list = ["squad", "wiki_qa"]
 
-    dataset_info = DescriptionDatasetRetriever(
-        reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json"
-    ).rerank_datasets(datasets_list, prompt_spec)
-    assert dataset_info is None
+    descriptionDatasetRetriever = DescriptionDatasetRetriever(
+        reranking_dataset_info_file="test_helpers/reranking_dataset_index_tiny.json",
+        num_votes=2,
+    )
+
+    datasets_list = ["squad", "codeparrot/apps"]
+    dataset_info_dict = descriptionDatasetRetriever.get_all_dataset_infos(datasets_list)
+
+    dataset_name, config_name = descriptionDatasetRetriever.rerank_datasets(
+        dataset_info_dict, prompt_spec
+    )
+    assert dataset_name == "codeparrot/apps"
+    assert config_name is None
 
 
 def mock_rerank_datasets(self, dataset_list, prompt_spec):
     """Mock dataset reranking by just returning squad dataset."""
-    return SQUAD_DATASET_INFO
+    return "squad", "plain_text"
 
 
-def mock_canonicalize_dataset(
-    self, top_dataset_info, prompt_spec, auto_transform_data, num_points_to_transform
-) -> DatasetDict:
+def mock_canonicalize_dataset(self, top_dataset_info, prompt_spec) -> DatasetDict:
     """Mock the canonicalize_dataset function by constructing a mock dataset."""
     # Given the dataset of
     # [ [0.9, 0, 0],

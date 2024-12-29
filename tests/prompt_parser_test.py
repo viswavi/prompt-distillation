@@ -136,7 +136,7 @@ def test_instruction_parser_with_invalid_json(mocked_parsing_method):
 @patch("time.sleep")
 @patch(
     "prompt2model.utils.APIAgent.generate_one_completion",
-    side_effect=openai.error.Timeout("timeout"),
+    side_effect=openai.APITimeoutError("timeout"),
 )
 def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_method):
     """Verify that we wait and retry (a set number of times) if the API times out.
@@ -165,7 +165,7 @@ def test_instruction_parser_with_timeout(mocked_parsing_method, mocked_sleep_met
     assert isinstance(exc_info.value, RuntimeError)
     # Check if the original exception (e) is present as the cause
     original_exception = exc_info.value.__cause__
-    assert isinstance(original_exception, openai.error.Timeout)
+    assert isinstance(original_exception, openai.APITimeoutError)
     gc.collect()
 
 

@@ -296,7 +296,7 @@ Here is the final response JSON with "input" and "output" keys:
 
 TRANSFORM_EXEMPLARS = """Task Description: {task_description}
 
-Exemplar:
+Task Examples:
 {samples}
 
 Data Sample:
@@ -311,63 +311,76 @@ Response:
 
 PLAN_EXEMPLARS = """Task Description: {task_description}
 
+Task Examples:
 {samples}
 
 Here are samples from a potentially relevant dataset for the task above. Notice how the format below is not as required by the task above.
 
+Dataset Row: 
 {dataset_rows}
-Propose a higher level plan to convert data from the potentially relevant dataset to data in the required format of the original task. Your plan should be a list of sequential steps that can be taken to perform the data transformation. Each step in the plan can take the following actions:
-1. Expand on a particular data field, potentially according to certain criteria
-2. Combine multiple data fields
-3. Generate new data fields as relevant and required, potentially according to certain criteria
-4. Choose data fields that will form "input" and data fields that will form "output"
 
-Plan:
+Plan to convert Dataset Samples to Task Examples is:
 {plan}"""  # noqa E501
 
 
-CREATE_PLAN_PROMPT = """You are a Data Transforming Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
+CREATE_PLAN_PROMPT = """You are a Planning Agent. You create a plan to transform data samples from their existing format into the required format for a given task.
+
+-------------------------------------------------
+Here are some examples for your reference.
 
 {in_context_examples}
 
+------------------------------------------------
+Now do the following task: 
+
 Task Description: {task_description}
 
+Task Examples:
 {example}
 
 Here are samples from a potentially relevant dataset for the task above. Notice how the format below is not as required by the task above.
 
+Dataset Samples: 
 {dataset_row}
-Propose a higher level plan to convert data from the potentially relevant dataset to data in the required format of the original task. Your plan should be a list of sequential steps that can be taken to perform the data transformation. Each step in the plan can take the following actions:
-1. Expand on a particular data field, potentially according to certain criteria
-2. Combine multiple data fields
-3. Generate new data fields as relevant and required, potentially according to certain criteria
-4. Choose data fields that will form "input" and data fields that will form "output"
 
-Plan:
+Carefully analyze the  `Task Description` and the `Task Examples`. Propose a higher-level plan to convert data from the Dataset Sample to data in the required format task examples. Your plan should be a list of sequential steps that can be taken to perform the data transformation. You don't need to use all columns, as the dataset may not be fully relevant. Keep steps as simple, explicit and concise as possible. Each step in the plan may take any of the following actions:
+1. Generate new columns as required by the task, and save them 
+2. Expand on a particular column to make it something more relevant to the task and save it
+3. Combine multiple columns from the dataset
+4. Choose columns that will form "input"
+5. After the input field is created, carefully analyze it to choose/generate the output field
+6. Ignore a data sample because it is not all relevant and return null for them. 
+
+Return only the plan.
+
 """  # noqa E501
 
-TRANSFORM_DATA_PROMPT = """You are a Data Transforming Agent. Your job is to:
-1. Read the task description.
-2. Read an exemplar of what an input and output looks like for the task.
-3. Read a particular data sample carefully that needs to be transformed such that it is relevant to the task described.
-4. Read the data transformation plan carefully that will help you convert the particular data sample into a relevant format.
+TRANSFORM_DATA_PROMPT = """You are a Data Transforming Agent. Your job is to transform data from a given format, to the required format. Following are the detailed instructions for the same:
+1. Read the `Task Description`.
+2. An example of the input and output looks like for the task is shown in `Task Examples`
+3. The sample to be transformed is in `Data Sample`. `
+4. Read the data transformation plan carefully that will help you convert the `Data Sample` into the required format. This should be relevant and intune to the `Task Description`
 5. Perform the plan step by step and explain your thinking.
 6. End your response with the transformed sample as a JSON response with exactly 2 fields: "input" and "output".
 
+-------------------------------------------------
+Here are some examples for your reference.
 {in_context_examples}
+------------------------------------------------
+Now do the following task: 
 
 Task Description: {task_description}
 
-Exemplar:
+Task Examples:
 {sample}
 
-Data Sample:
-{dataset_row}
-
-Plan:
 {plan}
 
-Think step by step through the plan and show your working. End your response as a JSON with exactly two fields: "input", and "output"
+Dataset Sample:
+{dataset_row}
+
+
+Think step by step through the plan to convert the above `Dataset Sample` and show your working. End your response as a JSON with exactly two fields: "input", and "output"
 Response:
 """  # noqa E501
 
@@ -386,21 +399,23 @@ def truncate_row(example_row: dict, max_length=200) -> str:
 
 
 def construct_prompt_for_plan(
-    task_description: str, example: str, dataset: list[dict], num_rows: int = 5
+    task_description: str, example: str, dataset: list[dict], num_rows: int = None
 ) -> str:
     """Construct prompt for plan.
 
-    Args:
-    task_description: str: Description of the task.
-    example: str: Example of the target task.
-    dataset: list[dict]: List of dictionaries containing the dataset rows
-    of the potentially relevant dataset for the task.
-    num_rows: int: Number of rows from `dataset` to add to the prompt.
+        Args:
+        task_description: Description of the task.
+        example: Example of the target task.
+        dataset: List of dictionaries containing the dataset rows
+            of the potentially relevant dataset for the task.
+        num_rows: Number of rows from `dataset` to add to the prompt.
 
     Returns:
-    str: Prompt for creating plan. Plan will be used for dataset transformation
+        Prompt for creating plan. Plan will be used for dataset transformation
     """
-    incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+    if not num_rows:
+        num_rows = min(len(dataset), 5)
+    incontext_tasks = [VITAMINC]  # using one is enough for now
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
@@ -419,36 +434,31 @@ def construct_prompt_for_plan(
 
     incontext_examples_str = ""
     for i, incontext_example in enumerate(incontext_examples):
-        incontext_examples_str += f"Exemplar {i+1}\n{incontext_example}\n\n"
-
-    incontext_examples_str += f"Exemplar {len(incontext_examples)+1}"
-
+        incontext_examples_str += f"Incontext Example {i+1}:\n{incontext_example}\n\n"
     return CREATE_PLAN_PROMPT.format(
         in_context_examples=incontext_examples_str,
         task_description=task_description,
         example=example,
-        dataset_row="\n".join(
-            f"{truncate_row(example_row=dataset[i])}\n" for i in range(num_rows)
-        ),
+        dataset_row="\n".join(f"{dataset[i]}\n" for i in range(num_rows)),
     )
 
 
 def construct_prompt_for_transform_data(
-    task_description: str, example: str, plan: str, dataset_row: dict
+    task_description: str, dataset_row: str, plan: str, example: str
 ) -> str:
     """Construct prompt for dataset transformation.
 
     Args:
-    task_description: str: Description of the task.
-    example: str: Example of the target task.
-    plan: str: Plan for dataset transformation.
-    dataset_row: dict: A dictionary containing the dataset row of the
-    potentially relevant dataset to be transformed.
+        task_description: Description of the task.
+        example: Example of the target task.
+        plan: Plan for dataset transformation.
+        dataset_row: A dictionary containing the dataset row of the
+            potentially relevant dataset to be transformed.
 
     Returns:
-    str: Prompt for dataset transformation.
+        Prompt for dataset transformation.
     """
-    incontext_tasks = [VITAMINC, PROVERBS, IMPLICATURES]
+    incontext_tasks = [VITAMINC]
     incontext_examples = []
 
     for incontext_task in incontext_tasks:
@@ -465,12 +475,10 @@ def construct_prompt_for_transform_data(
     for i, incontext_example in enumerate(incontext_examples):
         incontext_examples_str += f"Incontext Example {i+1}\n{incontext_example}\n\n"
 
-    incontext_examples_str += f"Incontext Example {len(incontext_examples)+1}"
-
     return TRANSFORM_DATA_PROMPT.format(
         in_context_examples=incontext_examples_str,
         task_description=task_description,
         sample=example,
-        dataset_row=truncate_row(dataset_row),
+        dataset_row=dataset_row,
         plan=plan,
     )

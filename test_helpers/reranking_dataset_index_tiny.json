@@ -1,22 +1,20 @@
 {
     "squad": {
         "dataset_name": "squad",
+        "description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.",
+        "downloads": 155401,
         "configs": {
             "plain_text": {
                 "config_name": "plain_text",
-                "sample_row": {
-                    "id": "5733be284776f41900661182",
-                    "title": "University_of_Notre_Dame",
-                    "context": "Architecturally, the school has a Catholic character. Atop the Main Building's gold dome is a golden statue of the Virgin Mary. Immediately in front of the Main Building and facing it, is a copper statue of Christ with arms upraised with the legend \"Venite Ad Me Omnes\". Next to the Main Building is the Basilica of the Sacred Heart. Immediately behind the basilica is the Grotto, a Marian place of prayer and reflection. It is a replica of the grotto at Lourdes, France where the Virgin Mary reputedly appeared to Saint Bernadette Soubirous in 1858. At the end of the main drive (and in a direct line that connects through 3 statues and the Gold Dome), is a simple, modern stone statue of Mary.",
-                    "question": "To whom did the Virgin Mary allegedly appear in 1858 in Lourdes France?",
-                    "answers.text": [
-                        "Saint Bernadette Soubirous"
-                    ],
-                    "answers.answer_start": [
-                        515
-                    ]
-                },
-                "columns": "id, title, context, question, answers_text, answers_answer_start",
+                "sample_row": "{\"id\": \"\\\"5733be284776f41900661182\\\"\", \"title\": \"\\\"University_of_Notre_Dame\\\"\", \"context\": \"\\\"Architecturally, the school has a Catholic charac...\", \"question\": \"\\\"To whom did the Virgin Mary allegedly appear in 1...\", \"answers_text\": \"[\\\"Saint Bernadette Soubirous\\\"]\", \"answers_answer_start\": \"[515]\"}",
+                "columns": [
+                    "id",
+                    "title",
+                    "context",
+                    "question",
+                    "answers_text",
+                    "answers_answer_start"
+                ],
                 "columns_mapping": {
                     "id": "id",
                     "title": "title",
@@ -29,282 +27,172 @@
                 "dataset_name": "squad"
             }
         },
-        "description": "Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable.\n",
-        "is_gated":false
-
+        "tags": [
+            "task_categories:question-answering",
+            "task_ids:extractive-qa",
+            "annotations_creators:crowdsourced",
+            "multilinguality:monolingual",
+            "source_datasets:extended|wikipedia",
+            "language:en"
+        ],
+        "is_gated": false
     },
-    "wiki_qa": {
-        "dataset_name": "wiki_qa",
+    "codeparrot/apps": {
+        "dataset_name": "codeparrot/apps",
+        "description": "APPS is a benchmark for Python code generation, it includes 10,000 problems, which range from having simple oneline solutions to being substantial algorithmic challenges, for more details please refer to this paper: https://arxiv.org/pdf/2105.09938.pdf.",
+        "downloads": 23087,
+        "configs": {
+            "all": {
+                "config_name": "all",
+                "sample_row": "{\"problem_id\": \"0\", \"question\": \"\\\"Polycarp has $n$ different binary words. A word c...\", \"solutions\": \"\\\"[\\\\\\\"for _ in range(int(input())):\\\\\\\\n    n = int(in...\", \"input_output\": \"\\\"{\\\\n  \\\\\\\"inputs\\\\\\\": [\\\\n    \\\\\\\"4\\\\\\\\n4\\\\\\\\n0001\\\\\\\\n1000\\\\\\\\n0...\", \"difficulty\": \"\\\"interview\\\"\", \"url\": \"\\\"https://codeforces.com/problemset/problem/1259/D\\\"...\", \"starter_code\": \"\\\"\\\"\"}",
+                "columns": [
+                    "problem_id",
+                    "question",
+                    "solutions",
+                    "input_output",
+                    "difficulty",
+                    "url",
+                    "starter_code"
+                ],
+                "columns_mapping": {
+                    "problem_id": "problem_id",
+                    "question": "question",
+                    "solutions": "solutions",
+                    "input_output": "input_output",
+                    "difficulty": "difficulty",
+                    "url": "url",
+                    "starter_code": "starter_code"
+                },
+                "dataset_description": "APPS is a benchmark for Python code generation, it includes 10,000 problems, which range from having simple oneline solutions to being substantial algorithmic challenges, for more details please refer to this paper: https://arxiv.org/pdf/2105.09938.pdf.\n",
+                "dataset_name": "codeparrot/apps"
+            },
+            "introductory": {
+                "config_name": "introductory",
+                "sample_row": "{\"problem_id\": \"2361\", \"question\": \"\\\"You are given an array $a$ of length $n$ consisti...\", \"solutions\": \"\\\"[\\\\\\\"from collections import defaultdict as dd\\\\\\\\nfr...\", \"input_output\": \"\\\"{\\\\\\\"inputs\\\\\\\": [\\\\\\\"6\\\\\\\\n1\\\\\\\\n2\\\\\\\\n3\\\\\\\\n4\\\\\\\\n5\\\\\\\\n6\\\\\\\\n\\\\\\\"], ...\", \"difficulty\": \"\\\"introductory\\\"\", \"url\": \"\\\"https://codeforces.com/problemset/problem/1353/D\\\"...\", \"starter_code\": \"\\\"\\\"\"}",
+                "columns": [
+                    "problem_id",
+                    "question",
+                    "solutions",
+                    "input_output",
+                    "difficulty",
+                    "url",
+                    "starter_code"
+                ],
+                "columns_mapping": {
+                    "problem_id": "problem_id",
+                    "question": "question",
+                    "solutions": "solutions",
+                    "input_output": "input_output",
+                    "difficulty": "difficulty",
+                    "url": "url",
+                    "starter_code": "starter_code"
+                },
+                "dataset_description": "APPS is a benchmark for Python code generation, it includes 10,000 problems, which range from having simple oneline solutions to being substantial algorithmic challenges, for more details please refer to this paper: https://arxiv.org/pdf/2105.09938.pdf.\n",
+                "dataset_name": "codeparrot/apps"
+            },
+            "interview": {
+                "config_name": "interview",
+                "sample_row": "{\"problem_id\": \"0\", \"question\": \"\\\"Polycarp has $n$ different binary words. A word c...\", \"solutions\": \"\\\"[\\\\\\\"for _ in range(int(input())):\\\\\\\\n    n = int(in...\", \"input_output\": \"\\\"{\\\\n  \\\\\\\"inputs\\\\\\\": [\\\\n    \\\\\\\"4\\\\\\\\n4\\\\\\\\n0001\\\\\\\\n1000\\\\\\\\n0...\", \"difficulty\": \"\\\"interview\\\"\", \"url\": \"\\\"https://codeforces.com/problemset/problem/1259/D\\\"...\", \"starter_code\": \"\\\"\\\"\"}",
+                "columns": [
+                    "problem_id",
+                    "question",
+                    "solutions",
+                    "input_output",
+                    "difficulty",
+                    "url",
+                    "starter_code"
+                ],
+                "columns_mapping": {
+                    "problem_id": "problem_id",
+                    "question": "question",
+                    "solutions": "solutions",
+                    "input_output": "input_output",
+                    "difficulty": "difficulty",
+                    "url": "url",
+                    "starter_code": "starter_code"
+                },
+                "dataset_description": "APPS is a benchmark for Python code generation, it includes 10,000 problems, which range from having simple oneline solutions to being substantial algorithmic challenges, for more details please refer to this paper: https://arxiv.org/pdf/2105.09938.pdf.\n",
+                "dataset_name": "codeparrot/apps"
+            },
+            "competition": {
+                "config_name": "competition",
+                "sample_row": "{\"problem_id\": \"2000\", \"question\": \"\\\"Codefortia is a small island country located some...\", \"solutions\": \"\\\"[\\\\\\\"import heapq\\\\\\\\nn,m,a,b=map(int,input().split()...\", \"input_output\": \"\\\"{\\\\n  \\\\\\\"inputs\\\\\\\": [\\\\n    \\\\\\\"5 5 20 25\\\\\\\\n1 2 25\\\\\\\\n2 ...\", \"difficulty\": \"\\\"competition\\\"\", \"url\": \"\\\"https://codeforces.com/problemset/problem/1149/D\\\"...\", \"starter_code\": \"\\\"\\\"\"}",
+                "columns": [
+                    "problem_id",
+                    "question",
+                    "solutions",
+                    "input_output",
+                    "difficulty",
+                    "url",
+                    "starter_code"
+                ],
+                "columns_mapping": {
+                    "problem_id": "problem_id",
+                    "question": "question",
+                    "solutions": "solutions",
+                    "input_output": "input_output",
+                    "difficulty": "difficulty",
+                    "url": "url",
+                    "starter_code": "starter_code"
+                },
+                "dataset_description": "APPS is a benchmark for Python code generation, it includes 10,000 problems, which range from having simple oneline solutions to being substantial algorithmic challenges, for more details please refer to this paper: https://arxiv.org/pdf/2105.09938.pdf.\n",
+                "dataset_name": "codeparrot/apps"
+            }
+        },
+        "tags": [
+            "task_categories:text-generation",
+            "task_ids:language-modeling",
+            "multilinguality:monolingual",
+            "language:code"
+        ],
+        "is_gated": false
+    },
+    "sst2": {
+        "dataset_name": "sst2",
+        "description": "The Stanford Sentiment Treebank consists of sentences from movie reviews and\nhuman annotations of their sentiment. The task is to predict the sentiment of a\ngiven sentence. We use the two-way (positive/negative) class split, and use only\nsentence-level labels.",
+        "downloads": 59683,
         "configs": {
             "default": {
                 "config_name": "default",
-                "sample_row": {
-                    "question_id": "Q1",
-                    "question": "how are glacier caves formed?",
-                    "document_title": "Glacier cave",
-                    "answer": "A partly submerged glacier cave on Perito Moreno Glacier .",
-                    "label": 0
-                },
-                "columns": "question_id, question, document_title, answer, label",
+                "sample_row": "{\"idx\": \"0\", \"sentence\": \"\\\"hide new secretions from the parental units \\\"\", \"label\": \"0\"}",
+                "columns": [
+                    "idx",
+                    "sentence",
+                    "label"
+                ],
                 "columns_mapping": {
-                    "question_id": "question_id",
-                    "question": "question",
-                    "document_title": "document_title",
-                    "answer": "answer",
+                    "idx": "idx",
+                    "sentence": "sentence",
                     "label": "label"
                 },
-                "dataset_description": "Wiki Question Answering corpus from Microsoft\n",
-                "dataset_name": "wiki_qa"
+                "dataset_description": "The Stanford Sentiment Treebank consists of sentences from movie reviews and\nhuman annotations of their sentiment. The task is to predict the sentiment of a\ngiven sentence. We use the two-way (positive/negative) class split, and use only\nsentence-level labels.\n",
+                "dataset_name": "sst2"
             }
         },
-        "description": "Wiki Question Answering corpus from Microsoft\n",
-        "is_gated":false
-    },
-    "trivia_qa": {
-        "dataset_name": "trivia_qa",
-        "configs": {
-            "unfiltered.nocontext": {
-                "config_name": "unfiltered.nocontext",
-                "sample_row": {
-                    "question": "Who was President when the first Peanuts cartoon was published?",
-                    "question_id": "tc_0",
-                    "question_source": "http://www.triviacountry.com/",
-                    "entity_pages.doc_source": [],
-                    "entity_pages.filename": [],
-                    "entity_pages.title": [],
-                    "entity_pages.wiki_context": [],
-                    "search_results.description": [],
-                    "search_results.filename": [],
-                    "search_results.rank": [],
-                    "search_results.title": [],
-                    "search_results.url": [],
-                    "search_results.search_context": [],
-                    "answer.aliases": [
-                        "Presidency of Harry S. Truman",
-                        "Hary truman",
-                        "Harry Shipp Truman",
-                        "Harry Truman's",
-                        "Harry S. Truman",
-                        "Harry S.Truman",
-                        "Harry S Truman",
-                        "H. S. Truman",
-                        "President Harry Truman",
-                        "Truman administration",
-                        "Presidency of Harry Truman",
-                        "Mr. Citizen",
-                        "HST (president)",
-                        "H.S. Truman",
-                        "Mary Jane Truman",
-                        "Harry Shippe Truman",
-                        "S truman",
-                        "Harry Truman",
-                        "President Truman",
-                        "33rd President of the United States",
-                        "Truman Administration",
-                        "Harry Solomon Truman",
-                        "Harold Truman",
-                        "Harry truman",
-                        "H. Truman"
-                    ],
-                    "answer.normalized_aliases": [
-                        "presidency of harry s truman",
-                        "33rd president of united states",
-                        "truman administration",
-                        "s truman",
-                        "mr citizen",
-                        "harry truman s",
-                        "harry truman",
-                        "hary truman",
-                        "harry shipp truman",
-                        "h truman",
-                        "harry shippe truman",
-                        "h s truman",
-                        "president truman",
-                        "president harry truman",
-                        "hst president",
-                        "presidency of harry truman",
-                        "mary jane truman",
-                        "harry solomon truman",
-                        "harold truman",
-                        "harry s truman"
-                    ],
-                    "answer.matched_wiki_entity_name": "",
-                    "answer.normalized_matched_wiki_entity_name": "",
-                    "answer.normalized_value": "harry truman",
-                    "answer.type": "WikipediaEntity",
-                    "answer.value": "Harry Truman"
-                },
-                "columns": "question, question_id, question_source, entity_pages_doc_source, entity_pages_filename, entity_pages_title, entity_pages_wiki_context, search_results_description, search_results_filename, search_results_rank, search_results_title, search_results_url, search_results_search_context, answer_aliases, answer_normalized_aliases, answer_matched_wiki_entity_name, answer_normalized_matched_wiki_entity_name, answer_normalized_value, answer_type, answer_value",
-                "columns_mapping": {
-                    "question": "question",
-                    "question_id": "question_id",
-                    "question_source": "question_source",
-                    "entity_pages.doc_source": "entity_pages_doc_source",
-                    "entity_pages.filename": "entity_pages_filename",
-                    "entity_pages.title": "entity_pages_title",
-                    "entity_pages.wiki_context": "entity_pages_wiki_context",
-                    "search_results.description": "search_results_description",
-                    "search_results.filename": "search_results_filename",
-                    "search_results.rank": "search_results_rank",
-                    "search_results.title": "search_results_title",
-                    "search_results.url": "search_results_url",
-                    "search_results.search_context": "search_results_search_context",
-                    "answer.aliases": "answer_aliases",
-                    "answer.normalized_aliases": "answer_normalized_aliases",
-                    "answer.matched_wiki_entity_name": "answer_matched_wiki_entity_name",
-                    "answer.normalized_matched_wiki_entity_name": "answer_normalized_matched_wiki_entity_name",
-                    "answer.normalized_value": "answer_normalized_value",
-                    "answer.type": "answer_type",
-                    "answer.value": "answer_value"
-                },
-                "dataset_description": "TriviaqQA is a reading comprehension dataset containing over 650K\nquestion-answer-evidence triples. TriviaqQA includes 95K question-answer\npairs authored by trivia enthusiasts and independently gathered evidence\ndocuments, six per question on average, that provide high quality distant\nsupervision for answering the questions.\n",
-                "dataset_name": "trivia_qa"
-            },
-            "rc.nocontext": {
-                "config_name": "rc.nocontext",
-                "sample_row": {
-                    "question": "Which American-born Sinclair won the Nobel Prize for Literature in 1930?",
-                    "question_id": "tc_1",
-                    "question_source": "http://www.triviacountry.com/",
-                    "entity_pages.doc_source": [],
-                    "entity_pages.filename": [],
-                    "entity_pages.title": [],
-                    "entity_pages.wiki_context": [],
-                    "search_results.description": [],
-                    "search_results.filename": [],
-                    "search_results.rank": [],
-                    "search_results.title": [],
-                    "search_results.url": [],
-                    "search_results.search_context": [],
-                    "answer.aliases": [
-                        "(Harry) Sinclair Lewis",
-                        "Harry Sinclair Lewis",
-                        "Lewis, (Harry) Sinclair",
-                        "Grace Hegger",
-                        "Sinclair Lewis"
-                    ],
-                    "answer.normalized_aliases": [
-                        "grace hegger",
-                        "lewis harry sinclair",
-                        "harry sinclair lewis",
-                        "sinclair lewis"
-                    ],
-                    "answer.matched_wiki_entity_name": "",
-                    "answer.normalized_matched_wiki_entity_name": "",
-                    "answer.normalized_value": "sinclair lewis",
-                    "answer.type": "WikipediaEntity",
-                    "answer.value": "Sinclair Lewis"
-                },
-                "columns": "question, question_id, question_source, entity_pages_doc_source, entity_pages_filename, entity_pages_title, entity_pages_wiki_context, search_results_description, search_results_filename, search_results_rank, search_results_title, search_results_url, search_results_search_context, answer_aliases, answer_normalized_aliases, answer_matched_wiki_entity_name, answer_normalized_matched_wiki_entity_name, answer_normalized_value, answer_type, answer_value",
-                "columns_mapping": {
-                    "question": "question",
-                    "question_id": "question_id",
-                    "question_source": "question_source",
-                    "entity_pages.doc_source": "entity_pages_doc_source",
-                    "entity_pages.filename": "entity_pages_filename",
-                    "entity_pages.title": "entity_pages_title",
-                    "entity_pages.wiki_context": "entity_pages_wiki_context",
-                    "search_results.description": "search_results_description",
-                    "search_results.filename": "search_results_filename",
-                    "search_results.rank": "search_results_rank",
-                    "search_results.title": "search_results_title",
-                    "search_results.url": "search_results_url",
-                    "search_results.search_context": "search_results_search_context",
-                    "answer.aliases": "answer_aliases",
-                    "answer.normalized_aliases": "answer_normalized_aliases",
-                    "answer.matched_wiki_entity_name": "answer_matched_wiki_entity_name",
-                    "answer.normalized_matched_wiki_entity_name": "answer_normalized_matched_wiki_entity_name",
-                    "answer.normalized_value": "answer_normalized_value",
-                    "answer.type": "answer_type",
-                    "answer.value": "answer_value"
-                },
-                "dataset_description": "TriviaqQA is a reading comprehension dataset containing over 650K\nquestion-answer-evidence triples. TriviaqQA includes 95K question-answer\npairs authored by trivia enthusiasts and independently gathered evidence\ndocuments, six per question on average, that provide high quality distant\nsupervision for answering the questions.\n",
-                "dataset_name": "trivia_qa"
-            }
-        },
-        "description": "TriviaqQA is a reading comprehension dataset containing over 650K\nquestion-answer-evidence triples. TriviaqQA includes 95K question-answer\npairs authored by trivia enthusiasts and independently gathered evidence\ndocuments, six per question on average, that provide high quality distant\nsupervision for answering the questions.\n",
-        "is_gated":false
-    },
-    "daily_dialog": {
-        "dataset_name": "daily_dialog",
-        "configs": {
-            "default": {
-                "config_name": "default",
-                "sample_row": {
-                    "dialog": [
-                        "Say , Jim , how about going for a few beers after dinner ? ",
-                        " You know that is tempting but is really not good for our fitness . ",
-                        " What do you mean ? It will help us to relax . ",
-                        " Do you really think so ? I don't . It will just make us fat and act silly . Remember last time ? ",
-                        " I guess you are right.But what shall we do ? I don't feel like sitting at home . ",
-                        " I suggest a walk over to the gym where we can play singsong and meet some of our friends . ",
-                        " That's a good idea . I hear Mary and Sally often go there to play pingpong.Perhaps we can make a foursome with them . ",
-                        " Sounds great to me ! If they are willing , we could ask them to go dancing with us.That is excellent exercise and fun , too . ",
-                        " Good.Let ' s go now . ",
-                        " All right . "
-                    ],
-                    "act": [
-                        3,
-                        4,
-                        2,
-                        2,
-                        2,
-                        3,
-                        4,
-                        1,
-                        3,
-                        4
-                    ],
-                    "emotion": [
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        4,
-                        4,
-                        4,
-                        4
-                    ]
-                },
-                "columns": "dialog, act, emotion",
-                "columns_mapping": {
-                    "dialog": "dialog",
-                    "act": "act",
-                    "emotion": "emotion"
-                },
-                "dataset_description": "We develop a high-quality multi-turn dialog dataset, DailyDialog, which is intriguing in several aspects.\nThe language is human-written and less noisy. The dialogues in the dataset reflect our daily communication way\nand cover various topics about our daily life. We also manually label the developed dataset with communication\nintention and emotion information. Then, we evaluate existing approaches on DailyDialog dataset and hope it\nbenefit the research field of dialog systems.\n",
-                "dataset_name": "daily_dialog"
-            }
-        },
-        "description": "We develop a high-quality multi-turn dialog dataset, DailyDialog, which is intriguing in several aspects.\nThe language is human-written and less noisy. The dialogues in the dataset reflect our daily communication way\nand cover various topics about our daily life. We also manually label the developed dataset with communication\nintention and emotion information. Then, we evaluate existing approaches on DailyDialog dataset and hope it\nbenefit the research field of dialog systems.\n",
-        "is_gated":false
+        "tags": [
+            "task_categories:text-classification",
+            "task_ids:sentiment-classification",
+            "annotations_creators:crowdsourced",
+            "multilinguality:monolingual",
+            "source_datasets:original",
+            "language:en"
+        ],
+        "is_gated": false
     },
     "lmqg/qag_squad": {
         "dataset_name": "lmqg/qag_squad",
+        "description": "Question & answer generation dataset based on SQuAD.",
+        "downloads": 13,
         "configs": {
             "qag_squad": {
                 "config_name": "qag_squad",
-                "sample_row": {
-                    "answers": [
-                        "4 Minutes",
-                        "Elvis Presley",
-                        "thirteenth",
-                        "Sticky & Sweet Tour",
-                        "$280 million,"
-                    ],
-                    "questions": [
-                        "Which single was released as the album's lead single?",
-                        "Madonna surpassed which artist with the most top-ten hits?",
-                        "4 minutes became Madonna's which number one single in the UK?",
-                        "What is the name of the first tour with Live Nation?",
-                        "How much did Stick and Sweet Tour grossed?"
-                    ],
-                    "paragraph": "\"4 Minutes\" was released as the album's lead single and peaked at number three on the Billboard Hot 100. It was Madonna's 37th top-ten hit on the chart\u2014it pushed Madonna past Elvis Presley as the artist with the most top-ten hits. In the UK she retained her record for the most number-one singles for a female artist; \"4 Minutes\" becoming her thirteenth. At the 23rd Japan Gold Disc Awards, Madonna received her fifth Artist of the Year trophy from Recording Industry Association of Japan, the most for any artist. To further promote the album, Madonna embarked on the Sticky & Sweet Tour; her first major venture with Live Nation. With a gross of $280 million, it became the highest-grossing tour by a solo artist then, surpassing the previous record Madonna set with the Confessions Tour; it was later surpassed by Roger Waters' The Wall Live. It was extended to the next year, adding new European dates, and after it ended, the total gross was $408 million.",
-                    "questions_answers": "question: Which single was released as the album's lead single?, answer: 4 Minutes | question: Madonna surpassed which artist with the most top-ten hits?, answer: Elvis Presley | question: 4 minutes became Madonna's which number one single in the UK?, answer: thirteenth | question: What is the name of the first tour with Live Nation?, answer: Sticky & Sweet Tour | question: How much did Stick and Sweet Tour grossed?, answer: $280 million,"
-                },
-                "columns": "answers, questions, paragraph, questions_answers",
+                "sample_row": "{\"answers\": \"[\\\"4 Minutes\\\", \\\"Elvis Presley\\\", \\\"thirteenth\\\", \\\"Stic...\", \"questions\": \"[\\\"Which single was released as the album's lead si...\", \"paragraph\": \"\\\"\\\\\\\"4 Minutes\\\\\\\" was released as the album's lead si...\", \"questions_answers\": \"\\\"question: Which single was released as the album'...\"}",
+                "columns": [
+                    "answers",
+                    "questions",
+                    "paragraph",
+                    "questions_answers"
+                ],
                 "columns_mapping": {
                     "answers": "answers",
                     "questions": "questions",
@@ -315,7 +203,14 @@
                 "dataset_name": "lmqg/qag_squad"
             }
         },
-        "description": "Question & answer generation dataset based on SQuAD.",
-        "is_gated":false
+        "tags": [
+            "task_categories:text-generation",
+            "task_ids:language-modeling",
+            "multilinguality:monolingual",
+            "source_datasets:lmqg/qg_squad",
+            "language:en",
+            "question-generation"
+        ],
+        "is_gated": false
     }
 }

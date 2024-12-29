@@ -17,7 +17,6 @@ class DatasetTransformer(ABC):
         self,
         prompt_spec: PromptSpec,
         dataset: datasets.Dataset,
-        num_points_to_transform: int,
     ) -> datasets.Dataset:
         """Transform a split of data.
 
