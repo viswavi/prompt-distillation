@@ -1,0 +1,8 @@
+name: Daily CI
+on:
+  schedule:
+    - cron: "0 14 * * *"
+
+jobs:
+  call-ci:
+    uses: neulab/prompt2model/.github/workflows/base_ci.yml@main
